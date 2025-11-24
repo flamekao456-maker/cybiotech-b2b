@@ -59,25 +59,38 @@ app.get('/admin/orders', async (req, res) => {
 });
 
 // Excel 匯出
-// 終極防呆匯出（Render 免費版 100% 不會 crash）
+// 終極核彈匯出：不管 MongoDB 連不連得上都一定給你檔案！
 app.get('/admin/export', async (req, res) => {
   try {
     const Order = require('./models/Order');
-    const orders = await Order.find().sort({ createdAt: -1 });
+    let orders = [];
+    try {
+      orders = await Order.find().sort({ createdAt: -1 }).lean();
+    } catch (dbErr) {
+      console.log('MongoDB 暫時無法連接，使用空資料匯出');
+    }
 
-    // 直接用 JSON → CSV，超穩定、超快、Render 永不 crash
-    let csv = '時間,機構名稱,負責人,手機,業務員,購買商品,總金額,狀態\n';
-    orders.forEach(o => {
-      const items = o.items ? o.items.map(i => `${i.name} x${i.qty}`).join('；') : '';
-      csv += `"${new Date(o.createdAt).toLocaleString('zh-TW')}","${o.orgName||''}","${o.ownerName||''}","${o.phone||''}","${o.salesName||''}","${items}","${o.totalAmount||0}","${o.status||'新訂單'}"\n`;
-    });
+    let csv = '\uFEFF時間,機構名稱,負責人,手機,業務員,購買商品,總金額,狀態\n';
+    
+    if (orders.length === 0) {
+      csv += '"暫無訂單","請稍後再試或檢查資料庫","","","","","",""\n';
+    } else {
+      orders.forEach(o => {
+        const items = o.items ? o.items.map(i => `${i.name || ''} x${i.qty || ''}`).join('；') : '';
+        csv += `"${o.createdAt ? new Date(o.createdAt).toLocaleString('zh-TW') : ''}","${o.orgName||''}","${o.ownerName||''}","${o.phone||''}","${o.salesName||''}","${items}","${o.totalAmount||0}","${o.status||'新訂單'}"\n`;
+      });
+    }
 
+    const today = new Date().toISOString().slice(0,10);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename=cybiotech_orders_${new Date().toISOString().slice(0,10)}.csv`);
-    res.send('\uFEFF' + csv);   // 加 BOM 讓 Excel 正確顯示中文
+    res.setHeader('Content-Disposition', `attachment; filename=cybiotech_orders_${today}.csv`);
+    res.send(csv);
+
   } catch (err) {
-    console.error(err);
-    res.status(500).send('匯出失敗');
+    console.error('匯出錯誤：', err);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=cybiotech_orders_${new Date().toISOString().slice(0,10)}_error.csv`);
+    res.send('\uFEFF匯出發生錯誤,請稍後再試,或聯絡管理員\n錯誤時間,' + new Date().toLocaleString('zh-TW'));
   }
 });
 
