@@ -61,40 +61,19 @@ app.get('/admin/orders', async (req, res) => {
 // Excel 匯出
 app.get('/admin/export', async (req, res) => {
   try {
-    const ExcelJS = require('exceljs');
     const Order = require('./models/Order');
     const orders = await Order.find().sort({ createdAt: -1 });
 
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet('訂單');
-    sheet.columns = [
-      { header: '時間', key: 'time', width: 20 },
-      { header: '機構名稱', key: 'org', width: 28 },
-      { header: '負責人', key: 'owner', width: 15 },
-      { header: '手機', key: 'phone', width: 15 },
-      { header: '業務員', key: 'sales', width: 12 },
-      { header: '購買商品', key: 'items', width: 45 },
-      { header: '總金額', key: 'amount', width: 12 },
-      { header: '狀態', key: 'status', width: 10 }
-    ];
-
+    // 直接用 JSON → CSV，超穩定、超快、Render 永不 crash
+    let csv = '時間,機構名稱,負責人,手機,業務員,購買商品,總金額,狀態\n';
     orders.forEach(o => {
-      sheet.addRow({
-        time: new Date(o.createdAt).toLocaleString('zh-TW'),
-        org: o.orgName || '',
-        owner: o.ownerName || '',
-        phone: o.phone || '',
-        sales: o.salesName || '',
-        items: o.items ? o.items.map(i => `${i.name} x${i.qty}`).join('；') : '',
-        amount: o.totalAmount || 0,
-        status: o.status || '新訂單'
-      });
+      const items = o.items ? o.items.map(i => `${i.name} x${i.qty}`).join('；') : '';
+      csv += `"${new Date(o.createdAt).toLocaleString('zh-TW')}","${o.orgName||''}","${o.ownerName||''}","${o.phone||''}","${o.salesName||''}","${items}","${o.totalAmount||0}","${o.status||'新訂單'}"\n`;
     });
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=cybiotech_orders_${new Date().toISOString().slice(0,10)}.xlsx`);
-    await workbook.xlsx.write(res);
-    res.end();
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=cybiotech_orders_${new Date().toISOString().slice(0,10)}.csv`);
+    res.send('\uFEFF' + csv);   // 加 BOM 讓 Excel 正確顯示中文
   } catch (err) {
     console.error(err);
     res.status(500).send('匯出失敗');
