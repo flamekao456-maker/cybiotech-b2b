@@ -59,6 +59,7 @@ app.get('/admin/orders', async (req, res) => {
 });
 
 // Excel 匯出
+// 終極防呆匯出（Render 免費版 100% 不會 crash）
 app.get('/admin/export', async (req, res) => {
   try {
     const Order = require('./models/Order');
