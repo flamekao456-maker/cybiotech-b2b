@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>創益生技 B2B 會員註冊</title>
+  <style>
+    body { font-family: Arial; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin:0; }
+    .box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 400px; }
+    h1 { text-align: center; color: #333; margin-bottom: 30px; }
+    input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+    button { width: 100%; padding: 14px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; margin-top: 20px; }
+    button:hover { background: #556cd6; }
+    .checkbox { display: flex; align-items: center; margin: 15px 0; font-size: 14px; }
+    .checkbox input { width: auto; margin-right: 10px; }
+    .success { color: green; text-align: center; margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>創益生技 B2B<br>會員註冊</h1>
+    <input type="text" id="org" placeholder="機構名稱" required>
+    <input type="text" id="owner" placeholder="負責人姓名" required>
+    <input type="text" id="phone" placeholder="手機號碼" required>
+    <input type="text" id="sales" placeholder="負責業務" required>
+    <input type="password" id="pass" placeholder="設定密碼" required>
+    
+    <div class="checkbox">
+      <input type="checkbox" id="policy" required>
+      <label for="policy">我已閱讀並同意 <a href="#" style="color:#667eea">服務條款</a></label>
+    </div>
+    <div class="checkbox">
+      <input type="checkbox" id="privacy" required>
+      <label for="privacy">我已閱讀並同意 <a href="#" style="color:#667eea">隱私權政策</a></label>
+    </div>
+    
+    <button onclick="register()">立即註冊</button>
+    <div id="msg"></div>
+  </div>
+
+  <script>
+    async function register() {
+      const data = {
+        orgName: document.getElementById('org').value,
+        ownerName: document.getElementById('owner').value,
+        phone: document.getElementById('phone').value,
+        salesName: document.getElementById('sales').value,
+        password: document.getElementById('pass').value,
+        agreedPolicy: document.getElementById('policy').checked,
+        agreedPrivacy: document.getElementById('privacy').checked
+      };
+      
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      
+      if (result.success) {
+        document.getElementById('msg').innerHTML = '<div class="success">註冊成功！請記住您的手機號碼登入</div>';
+      } else {
+        document.getElementById('msg').innerHTML = '<div style="color:red">註冊失敗：' + (result.msg || '請檢查欄位') + '</div>';
+      }
+    }
+  </script>
+</body>
+</html>

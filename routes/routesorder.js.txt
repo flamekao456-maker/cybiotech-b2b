@@ -1,0 +1,40 @@
+const express = require('express');
+const jwt = require('jsonwebtoken');
+const Product = require('../models/Product');
+const Order = require('../models/Order');
+const router = express.Router();
+
+// 取得產品
+router.get('/products', async (req, res) => {
+  const products = await Product.getAll();
+  res.json(products);
+});
+
+// 下單
+router.post('/order', async (req, res) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) return res.status(401).json({ msg: '請登入' });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { items, shippingAddress, note } = req.body;
+    const totalAmount = items.reduce((sum, i) => sum + (i.price * i.qty), 0);
+
+    const order = new Order({
+      lineUserId: decoded.lineUserId,
+      displayName: decoded.displayName,
+      ...req.user, // 從 token 拿
+      items,
+      totalAmount,
+      shippingAddress,
+      note
+    });
+    await order.save();
+
+    res.json({ msg: '訂單成功', orderId: order._id });
+  } catch (err) {
+    res.status(401).json({ msg: 'token 無效' });
+  }
+});
+
+module.exports = router;

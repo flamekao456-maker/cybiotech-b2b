@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>創益生技後台</title>
+  <style>body { font-family: Arial; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #ddd; padding: 8px; }</style>
+</head>
+<body>
+  <h1>訂單管理</h1>
+  <input type="password" id="pass" placeholder="密碼">
+  <button onclick="login()">登入</button>
+  <button onclick="exportExcel()">匯出 Excel</button>
+  <div id="orders"></div>
+
+  <script>
+    async function login() {
+      const res = await fetch('/admin/login', { method: 'POST', body: JSON.stringify({ password: document.getElementById('pass').value }), headers: { 'Content-Type': 'application/json' } });
+      if ((await res.json()).success) loadOrders();
+    }
+    async function loadOrders() {
+      const res = await fetch('/admin/orders');
+      const orders = await res.json();
+      document.getElementById('orders').innerHTML = `<table><tr><th>時間</th><th>機構</th><th>總額</th></tr>${orders.map(o => `<tr><td>${o.createdAt}</td><td>${o.orgName}</td><td>${o.totalAmount}</td></tr>`).join('')}</table>`;
+    }
+    function exportExcel() { window.location.href = '/admin/export'; }
+  </script>
+</body>
+</html>

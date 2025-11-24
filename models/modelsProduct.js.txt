@@ -1,0 +1,23 @@
+const mongoose = require('mongoose');
+
+const productSchema = new mongoose.Schema({
+  name: String,
+  code: String,
+  price: Number,
+  image: String,
+  stock: Number
+});
+
+// 預設商品
+productSchema.statics.getAll = async function() {
+  let products = await this.find();
+  if (products.length === 0) {
+    products = await this.insertMany([
+      { name: "產品A", code: "PA-001", price: 2800, image: "https://via.placeholder.com/300?text=產品A", stock: 999 },
+      { name: "產品B", code: "PB-001", price: 3800, image: "https://via.placeholder.com/300?text=產品B", stock: 999 }
+    ]);
+  }
+  return products;
+};
+
+module.exports = mongoose.model('Product', productSchema);

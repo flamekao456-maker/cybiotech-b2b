@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>創益生技 B2B 註冊</title>
+  <style>body { font-family: Arial; padding: 20px; } input { width: 100%; padding: 10px; margin: 5px 0; } button { width: 100%; padding: 15px; background: #0066cc; color: white; border: none; }</style>
+</head>
+<body>
+  <h2>填寫會員資料</h2>
+  <input type="text" id="org" placeholder="機構名稱" required>
+  <input type="text" id="owner" placeholder="負責人" required>
+  <input type="tel" id="phone" placeholder="手機" required>
+  <input type="text" id="sales" placeholder="業務名稱" required>
+  <label><input type="checkbox" id="agree" required> 同意條款</label>
+  <button onclick="submitData()">提交並登入</button>
+
+  <script>
+    function submitData() {
+      const data = {
+        org: document.getElementById('org').value,
+        owner: document.getElementById('owner').value,
+        phone: document.getElementById('phone').value,
+        sales: document.getElementById('sales').value
+      };
+      localStorage.setItem('cybiotech_b2b_data', JSON.stringify(data));
+      const url = new URLSearchParams(window.location.search).get('redirect');
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>

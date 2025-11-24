@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>創益生技 B2B 後台</title>
+  <style>
+    body { font-family: Arial; margin: 40px; background: #f9f9f9; }
+    h1 { color: #0066cc; }
+    input { padding: 12px; font-size: 18px; width: 320px; }
+    button { padding: 12px 30px; background: #0066cc; color: white; border: none; border-radius: 6px; font-size: 18px; margin-left: 10px; cursor: pointer; }
+    #orders { margin-top: 30px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background: #0066cc; color: white; }
+  </style>
+</head>
+<body>
+  <h1>創益生技 B2B 訂單後台</h1>
+  <input type="password" id="pass" placeholder="輸入管理密碼">
+  <button onclick="login()">登入</button>
+  <button onclick="exportExcel()" style="margin-left:20px">匯出 Excel</button>
+  <div id="orders"></div>
+
+  <script>
+    async function login() {
+      const r = await fetch("/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: document.getElementById("pass").value })
+      });
+      if ((await r.json()).success) loadOrders();
+      else alert("密碼錯誤");
+    }
+    async function loadOrders() {
+      const r = await fetch("/admin/orders");
+      const d = await r.json();
+      document.getElementById("orders").innerHTML = `
+        <h2>訂單總數：${d.length} 筆</h2>
+        <table>
+          <tr><th>時間</th><th>機構</th><th>負責人</th><th>手機</th><th>業務</th><th>商品</th><th>總額</th><th>狀態</th></tr>
+          ${d.map(o => `<tr>
+            <td>${new Date(o.createdAt).toLocaleString("zh-TW")}</td>
+            <td>${o.orgName}</td>
+            <td>${o.ownerName}</td>
+            <td>${o.phone}</td>
+            <td>${o.salesName}</td>
+            <td>${o.items.map(i => i.name + " x" + i.qty).join("<br>")}</td>
+            <td>${o.totalAmount}</td>
+            <td>${o.status}</td>
+          </tr>`).join("")}
+        </table>`;
+    }
+    function exportExcel() { location.href = "/admin/export"; }
+  </script>
+</body>
+</html>
